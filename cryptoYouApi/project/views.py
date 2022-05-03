@@ -125,7 +125,7 @@ def index (request):
                         dropout=DROPOUT, optimizer=OPTIMIZER, bidirectional=BIDIRECTIONAL)
     
     
-    # some tensorflow callbacks
+
     if (use):
         checkpointer = ModelCheckpoint(os.path.join("results", model_name + ".h5"), save_weights_only=True, save_best_only=True, verbose=1)
         tensorboard = TensorBoard(log_dir=os.path.join("logs", model_name))
@@ -223,11 +223,7 @@ def plot_graph(test_df):
     plt.show()
     
 def get_final_df(model, data):
-    """
-    This function takes the `model` and `data` dict to 
-    construct a final dataframe that includes the features along 
-    with true and predicted prices of the testing dataset
-    """
+
     # if predicted future price is higher than the current, 
     # then calculate the true future price minus the current price, to get the buy profit
     buy_profit  = lambda current, pred_future, true_future: true_future - current if pred_future > current else 0
@@ -268,19 +264,7 @@ def get_final_df(model, data):
 
 def load_data(ticker,start, end, n_steps=50, scale=True, shuffle=True, lookup_step=1, split_by_date=True,
                 test_size=0.2, feature_columns=['Adj Close', 'Volume', 'Open', 'High', 'Low']):
-    """
-    Loads data from Yahoo Finance source, as well as scaling, shuffling, normalizing and splitting.
-    Params:
-        ticker (str/pd.DataFrame): the ticker you want to load, examples include AAPL, TESL, etc.
-        n_steps (int): the historical sequence length (i.e window size) used to predict, default is 50
-        scale (bool): whether to scale prices from 0 to 1, default is True
-        shuffle (bool): whether to shuffle the dataset (both training & testing), default is True
-        lookup_step (int): the future lookup step to predict, default is 1 (e.g next day)
-        split_by_date (bool): whether we split the dataset into training/testing by date, setting it 
-            to False will split datasets in a random way
-        test_size (float): ratio for test data, default is 0.2 (20% testing data)
-        feature_columns (list): the list of features to use to feed into the model, default is everything grabbed from yahoo_fin
-    """
+
     # see if ticker is already a loaded stock from yahoo finance
     if isinstance(ticker, str):
         # load it from yahoo_fin library
@@ -288,11 +272,11 @@ def load_data(ticker,start, end, n_steps=50, scale=True, shuffle=True, lookup_st
         #df = df.drop(columns=['Open', 'High', 'Low', 'Volume', 'Adj Close'])
         print(df)
     elif isinstance(ticker, pd.DataFrame):
-        # already loaded, use it directly
+        
         df = ticker
     else:
         raise TypeError("ticker can be either a str or a `pd.DataFrame` instances")
-    # this will contain all the elements we want to return from this function
+    
     result = {}
     # we will also return the original dataframe itself
     result['df'] = df.copy()
@@ -313,8 +297,7 @@ def load_data(ticker,start, end, n_steps=50, scale=True, shuffle=True, lookup_st
         result["column_scaler"] = column_scaler
     # add the target column (label) by shifting by `lookup_step`
     df['future'] = df['Adj Close'].shift(-lookup_step)
-    # last `lookup_step` columns contains NaN in future column
-    # get them before droping NaNs
+ 
     last_sequence = np.array(df[feature_columns].tail(lookup_step))
     # drop the NaNs
     df.dropna(inplace=True)
@@ -324,9 +307,6 @@ def load_data(ticker,start, end, n_steps=50, scale=True, shuffle=True, lookup_st
         sequences.append(entry)
         if len(sequences) == n_steps:
             sequence_data.append([np.array(sequences), target])
-    # get the last sequence by appending the last `n_step` sequence with `lookup_step` sequence
-    # for instance, if n_steps=50 and lookup_step=10, last_sequence should be of 60 (that is 50+10) length
-    # this last_sequence will be used to predict future stock prices that are not available in the dataset
     last_sequence = list([s[:len(feature_columns)] for s in sequences]) + list(last_sequence)
     last_sequence = np.array(last_sequence).astype(np.float32)
     # add to result
